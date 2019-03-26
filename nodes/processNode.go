@@ -23,7 +23,7 @@ type ProcessNode struct {
 	Log             Logger
 	ProcessNodePath string
 	WatchNodePath   string
-	Id              int64
+	ID              uint64
 	ZkService       *zkLibs.ZooKeeperService
 	StopCh          chan struct{}
 	ErrCh           chan error
@@ -35,7 +35,7 @@ const (
 	ProcessNodePrefix = "/p_"
 )
 
-func NewProcessNode(id int64, zkURLS []string, errCh chan error, electedCh chan bool, dLog Logger) *ProcessNode {
+func NewProcessNode(id uint64, zkURLS []string, errCh chan error, electedCh chan bool, dLog Logger) *ProcessNode {
 	zookeeperService, err := zkLibs.NewZooKeeperService(zkURLS, 1*time.Second)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot new zk service %s", err.Error())
@@ -43,7 +43,7 @@ func NewProcessNode(id int64, zkURLS []string, errCh chan error, electedCh chan 
 
 	node := &ProcessNode{
 		Log:       dLog,
-		Id:        id,
+		ID:        id,
 		ZkService: zookeeperService,
 		StopCh:    make(chan struct{}),
 		ErrCh:     errCh,
@@ -55,9 +55,9 @@ func NewProcessNode(id int64, zkURLS []string, errCh chan error, electedCh chan 
 
 func (node *ProcessNode) Run() error {
 	if node.Log != nil {
-		node.Log.Infof("process id %d has started", node.Id)
+		node.Log.Infof("process id %d has started", node.ID)
 	} else {
-		fmt.Printf("process id %d has started \n", node.Id)
+		fmt.Printf("process id %d has started \n", node.ID)
 	}
 
 	if node.ZkService == nil {
@@ -78,9 +78,9 @@ func (node *ProcessNode) Run() error {
 	node.ProcessNodePath = nodePath
 
 	if node.Log != nil {
-		node.Log.Infof("process id is %d and path is %s", node.Id, node.ProcessNodePath)
+		node.Log.Infof("process id is %d and path is %s", node.ID, node.ProcessNodePath)
 	} else {
-		fmt.Printf("process id is %d and path is %s \n", node.Id, node.ProcessNodePath)
+		fmt.Printf("process id is %d and path is %s \n", node.ID, node.ProcessNodePath)
 	}
 
 	node.AttemptForLeaderPosition()
@@ -105,9 +105,9 @@ func (node *ProcessNode) AttemptForLeaderPosition() {
 
 	if strings.Compare("/"+childNodePaths[0], node.ProcessNodePath) == 0 {
 		if node.Log != nil {
-			node.Log.Infof("process id is %d and get the leader right", node.Id)
+			node.Log.Infof("process id is %d and get the leader right", node.ID)
 		} else {
-			fmt.Printf("process id is %d and get the leader right \n", node.Id)
+			fmt.Printf("process id is %d and get the leader right \n", node.ID)
 		}
 		go func() {
 			if node.ElectedCh != nil {
@@ -132,9 +132,9 @@ func (node *ProcessNode) AttemptForLeaderPosition() {
 			}
 
 			if node.Log != nil {
-				node.Log.Infof("the process id %d watch on node with path %s", node.Id, watchedNodePath)
+				node.Log.Infof("the process id %d watch on node with path %s", node.ID, watchedNodePath)
 			} else {
-				fmt.Printf("the process id %d watch on node with path %s \n", node.Id, watchedNodePath)
+				fmt.Printf("the process id %d watch on node with path %s \n", node.ID, watchedNodePath)
 			}
 
 			go func() {
@@ -154,9 +154,9 @@ func (node *ProcessNode) AttemptForLeaderPosition() {
 
 func (node *ProcessNode) Process(event *zkLibs.EventData) {
 	if node.Log != nil {
-		node.Log.Infof("process id is %d and event is %v", node.Id, *event)
+		node.Log.Infof("process id is %d and event is %v", node.ID, *event)
 	} else {
-		fmt.Printf("process id is %d and event is %v \n", node.Id, *event)
+		fmt.Printf("process id is %d and event is %v \n", node.ID, *event)
 	}
 
 	if event.Event.Type.String() == "EventNodeDeleted" {
