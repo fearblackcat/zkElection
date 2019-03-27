@@ -88,10 +88,19 @@ func (node *ProcessNode) Run() error {
 	return nil
 }
 
+func (node *ProcessNode) sendElectionSignal(isElection bool) {
+	go func() {
+		if node.ElectedCh != nil {
+			node.ElectedCh <- isElection
+		}
+	}()
+}
+
 func (node *ProcessNode) AttemptForLeaderPosition() {
 	childNodePaths := node.ZkService.GetChildren(LeaderRootNode, false)
 	if len(childNodePaths) == 0 {
 		fmt.Fprint(os.Stderr, "the leaderRootNode children is Empty")
+		node.sendElectionSignal(false)
 		return
 	}
 
@@ -109,13 +118,10 @@ func (node *ProcessNode) AttemptForLeaderPosition() {
 		} else {
 			fmt.Printf("process id is %d and get the leader right \n", node.ID)
 		}
-		go func() {
-			if node.ElectedCh != nil {
-				node.ElectedCh <- true
-			}
-		}()
+		node.sendElectionSignal(true)
 	} else {
 		index := -1
+		node.sendElectionSignal(false)
 		for i, path := range childNodePaths {
 			if strings.Compare("/"+path, node.ProcessNodePath) == 0 {
 				index = i
